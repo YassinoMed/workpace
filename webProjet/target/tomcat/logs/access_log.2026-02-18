@@ -1,0 +1,2 @@
+127.0.0.1 - - [18/Feb/2026:09:43:56 +0000] "GET /webProjet/index.jsp HTTP/1.1" 200 676 http-bio-8899-exec-1 493
+127.0.0.1 - - [18/Feb/2026:09:43:57 +0000] "GET /favicon.ico HTTP/1.1" 404 - http-bio-8899-exec-3 0
