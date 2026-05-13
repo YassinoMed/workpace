@@ -9,7 +9,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,16 +23,15 @@ public class UserServiceImpl implements UserService {
     @Override
     public AppUser addUser(AppUser appUser) {
         appUser.setPassword(passwordEncoder.encode(appUser.getPassword()));
-
-        if (appUser.getRoles() == null) {
-            appUser.setRoles(new ArrayList<>());
-        }
-
         return appUserRepository.save(appUser);
     }
 
     @Override
     public AppRole addRole(AppRole appRole) {
+        AppRole existingRole = appRoleRepository.findByRoleName(appRole.getRoleName());
+        if (existingRole != null) {
+            return existingRole;
+        }
         return appRoleRepository.save(appRole);
     }
 
@@ -42,9 +40,16 @@ public class UserServiceImpl implements UserService {
         AppUser appUser = appUserRepository.findByUsername(username);
         AppRole appRole = appRoleRepository.findByRoleName(roleName);
 
-        if (appUser != null && appRole != null) {
-            appUser.getRoles().add(appRole);
+        if (appUser == null) {
+            throw new RuntimeException("Utilisateur introuvable : " + username);
         }
+
+        if (appRole == null) {
+            throw new RuntimeException("Rôle introuvable : " + roleName);
+        }
+
+        appUser.getRoles().add(appRole);
+        appUserRepository.save(appUser);
     }
 
     @Override

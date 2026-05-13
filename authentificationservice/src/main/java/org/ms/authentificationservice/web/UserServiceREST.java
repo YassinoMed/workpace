@@ -1,0 +1,23 @@
+package org.ms.authentificationservice.web;
+
+import org.ms.authentificationservice.entities.AppUser;
+import org.ms.authentificationservice.services.UserService;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+public class UserServiceREST {
+
+    private final UserService userService;
+
+    public UserServiceREST(UserService userService) {
+        this.userService = userService;
+    }
+
+    @GetMapping("/users")
+    public List<AppUser> getAllUsers() {
+        return userService.getAllUsers();
+    }
+}
