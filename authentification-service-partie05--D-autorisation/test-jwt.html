@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JWT Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .token-display {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin-top: 10px;
+        }
+        .section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 JWT Authentication Test</h1>
+        
+        <!-- Login Section -->
+        <div class="section">
+            <h2>1. Login (Get JWT Token)</h2>
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" value="user1" placeholder="Enter username">
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" value="123" placeholder="Enter password">
+            </div>
+            <button onclick="login()">Login</button>
+            <div id="loginResult"></div>
+        </div>
+
+        <!-- Get Users Section -->
+        <div class="section">
+            <h2>2. Get Users (Protected Resource)</h2>
+            <button onclick="getUsers()" id="getUsersBtn" disabled>Get Users List</button>
+            <div id="usersResult"></div>
+        </div>
+
+        <!-- JWT Decoder Section -->
+        <div class="section">
+            <h2>3. JWT Token Info</h2>
+            <div id="tokenInfo" class="info" style="display:none;">
+                <strong>Current JWT Token:</strong>
+                <div class="token-display" id="tokenDisplay"></div>
+                <button onclick="copyToken()" style="width: auto; margin-top: 10px;">Copy Token</button>
+                <button onclick="decodeToken()" style="width: auto; margin-top: 10px;">Decode Token</button>
+            </div>
+            <div id="decodedToken"></div>
+        </div>
+    </div>
+
+    <script>
+        let jwtToken = null;
+        const API_BASE_URL = 'http://localhost:8096';
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('loginResult');
+
+            resultDiv.innerHTML = '<div class="result info">Logging in...</div>';
+
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', username);
+                formData.append('password', password);
+
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    jwtToken = response.headers.get('Authorization');
+                    
+                    if (jwtToken) {
+                        resultDiv.innerHTML = `
+                            <div class="result success">
+                                <strong>✅ Login Successful!</strong><br>
+                                JWT Token received and stored.<br>
+                                You can now access protected resources.
+                            </div>
+                        `;
+                        
+                        // Show token info
+                        document.getElementById('tokenInfo').style.display = 'block';
+                        document.getElementById('tokenDisplay').textContent = jwtToken;
+                        
+                        // Enable get users button
+                        document.getElementById('getUsersBtn').disabled = false;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="result error">
+                                <strong>❌ Error:</strong><br>
+                                No JWT token received in response headers.
+                            </div>
+                        `;
+                    }
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Login Failed!</strong><br>
+                            Status: ${response.status} ${response.statusText}<br>
+                            Please check your credentials.
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Error:</strong><br>
+                        ${error.message}<br>
+                        Make sure the server is running on ${API_BASE_URL}
+                    </div>
+                `;
+            }
+        }
+
+        async function getUsers() {
+            const resultDiv = document.getElementById('usersResult');
+
+            if (!jwtToken) {
+                resultDiv.innerHTML = '<div class="result error">Please login first to get a JWT token.</div>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="result info">Fetching users...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/users`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': jwtToken
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <strong>✅ Users Retrieved Successfully!</strong><br>
+                            <pre>${JSON.stringify(users, null, 2)}</pre>
+                        </div>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <strong>❌ Access Denied!</strong><br>
+                            Status: ${response.status} ${response.statusText}<br>
+                            ${errorText ? 'Error: ' + errorText : 'JWT token may be invalid or expired.'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Error:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        function copyToken() {
+            if (jwtToken) {
+                navigator.clipboard.writeText(jwtToken).then(() => {
+                    alert('JWT Token copied to clipboard!');
+                }).catch(err => {
+                    alert('Failed to copy token: ' + err);
+                });
+            }
+        }
+
+        function decodeToken() {
+            const resultDiv = document.getElementById('decodedToken');
+            
+            if (!jwtToken) {
+                resultDiv.innerHTML = '<div class="result error">No token to decode.</div>';
+                return;
+            }
+
+            try {
+                // Remove "Bearer " prefix if present
+                const token = jwtToken.replace('Bearer ', '');
+                
+                // Split the token
+                const parts = token.split('.');
+                if (parts.length !== 3) {
+                    throw new Error('Invalid JWT format');
+                }
+
+                // Decode header and payload
+                const header = JSON.parse(atob(parts[0]));
+                const payload = JSON.parse(atob(parts[1]));
+
+                // Format expiration date
+                const expDate = new Date(payload.exp * 1000);
+                const now = new Date();
+                const isExpired = expDate < now;
+
+                resultDiv.innerHTML = `
+                    <div class="result info">
+                        <strong>📋 Decoded JWT Token:</strong><br><br>
+                        <strong>Header:</strong>
+                        <pre>${JSON.stringify(header, null, 2)}</pre>
+                        <strong>Payload:</strong>
+                        <pre>${JSON.stringify(payload, null, 2)}</pre>
+                        <strong>Expiration:</strong><br>
+                        ${expDate.toLocaleString()}<br>
+                        <strong>Status:</strong> ${isExpired ? '❌ Expired' : '✅ Valid'}<br>
+                        <strong>Time remaining:</strong> ${isExpired ? 'Expired' : Math.round((expDate - now) / 1000) + ' seconds'}
+                    </div>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <strong>❌ Error decoding token:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Test credentials info
+        console.log('Test Credentials:');
+        console.log('User 1: username=user1, password=123, roles=[USER]');
+        console.log('User 2: username=user2, password=456, roles=[USER, ADMIN]');
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+HTTP/1.1 200 
+Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyMiIsInJvbGVzIjpbIkFETUlOIiwiVVNFUiJdLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjgwODkvbG9naW4iLCJleHAiOjE3Nzg2NjM1MTN9.Kdk-Qw4zgHeXorXpe3CgI-hJ_IoBlw3ONN8tG7_H1zI
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 0
+Cache-Control: no-cache, no-store, max-age=0, must-revalidate
+Pragma: no-cache
+Expires: 0
+Content-Length: 0
+Date: Wed, 13 May 2026 09:06:53 GMT
+
